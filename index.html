@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aboagyewaa Stories</title>
+  <meta name="theme-color" content="#5a57ff" />
+  <link id="manifestLink" rel="manifest" href="#">
+  <link rel="icon" href="#" type="image/png" id="faviconLink">
+  <style>
+    :root {
+      --bg: #f9f9fb;
+      --text: #222;
+      --muted: #666;
+      --card: #fff;
+      --primary: #5a57ff;
+      --accent: #ff5aa5;
+      --border: #e6e6ef;
+    }
+    :root.dark {
+      --bg: #0f1121;
+      --text: #eaeaf2;
+      --muted: #b5b8cf;
+      --card: #171a31;
+      --primary: #8a87ff;
+      --accent: #ff7fbf;
+      --border: #2a2d4a;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+    }
+    .app-header, .app-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+    }
+    .app-footer {
+      border-top: 1px solid var(--border);
+      border-bottom: none;
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand .logo { font-size: 22px; }
+    .actions .btn { margin-left: 8px; }
+    main { max-width: 900px; margin: 0 auto; padding: 12px 16px; }
+
+    .btn {
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .btn:hover { border-color: var(--primary); }
+    .hidden { display: none; }
+
+    .toolbar {
+      display: grid;
+      grid-template-columns: 1fr 180px 100px;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .toolbar input, .toolbar select {
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--card);
+      color: var(--text);
+    }
+
+    .library {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .card h3 { margin: 0; font-size: 18px; }
+    .card .meta { font-size: 13px; color: var(--muted); }
+    .card .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag {
+      padding: 4px 8px;
+      font-size: 12px;
+      border-radius: 999px;
+      background: color-mix(in oklab, var(--primary) 20%, transparent);
+      border: 1px solid var(--border);
+    }
+    .card .actions { display: flex; justify-content: space-between; align-items: center; }
+    .card .read-btn { background: var(--primary); color: white; border: none; }
+
+    .reader {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      height: 70vh;
+      overflow: auto;
+    }
+    .reader-header {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
+    }
+    .reader-actions .btn { margin-left: 6px; }
+    article#storyArticle h2 { margin-top: 0; font-size: 22px; }
+    article#storyArticle .byline { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+    article#storyArticle p { margin: 12px 0; font-size: 18px; }
+    article#storyArticle .section {
+      border-left: 4px solid var(--primary);
+      padding-left: 10px;
+      margin: 12px 0;
+    }
+    .progress { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    progress { width: 100%; height: 12px; appearance: none; }
+    progress::-webkit-progress-bar { background: var(--border); border-radius: 8px; }
+    progress::-webkit-progress-value { background: var(--accent); border-radius: 8px; }
+
+    @media (max-width: 600px) { .toolbar { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="logo">📚</span>
+      <h1>Aboagyewaa Stories</h1>
+    </div>
+    <div class="actions">
+      <button id="themeToggle" class="btn" aria-label="Toggle theme">🌗</button>
+      <button id="shareApp" class="btn" aria-label="Share app">🔗</button>
+    </div>
+  </header>
+
+  <main id="view">
+    <section class="toolbar">
+      <input id="searchInput" type="search" placeholder="Search stories, authors, tags…" />
+      <select id="tagFilter">
+        <option value="">All tags</option>
+      </select>
+      <button id="clearFilters" class="btn">Clear</button>
+    </section>
+
+    <section id="library" class="library"></section>
+
+    <section id="reader" class="reader hidden">
+      <div class="reader-header">
+        <button id="backToLibrary" class="btn">← Library</button>
+        <div class="reader-actions">
+          <button id="bookmarkBtn" class="btn">🔖 Save</button>
+          <button id="fontPlus" class="btn">A+</button>
+          <button id="fontMinus" class="btn">A-</button>
+        </div>
+      </div>
+      <article id="storyArticle"></article>
+      <div class="progress">
+        <label>Progress</label>
+        <progress id="readProgress" value="0" max="100"></progress>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Built with care by Akua • Offline-ready • Tap the three dots to Install</p>
+  </footer>
+
+  <script>
+    // ---------- Story data ----------
+    const STORIES = [
+      {
+        id: "river-light",
+        title: "River of Light",
+        author: "Akua Aboagyewaa",
+        about: "A quiet courage grows along a Ghanaian river at dusk.",
+        tags: ["inspiration", "ghana", "friendship"],
+        sections: [
+          { type: "text", html: "<p>At Adenta’s edge, the river held the day’s last color—a thin gold ribbon stretching into evening.</p>" },
+          { type: "text", html: "<p>Kjersten’s postcard lay in my pocket, soft from the walk. ‘Send me your sunset,’ she wrote.</p>" },
+          { type: "text", html: "<p>I raised my phone, but paused. Some moments ask you to listen first. Frogs stitched tiny beats; a child laughed across the bank.</p>" },
+          { type: "text", html: "<p>I closed my eyes and counted three breaths. When I opened them, the light was braver. I took the picture—and also the feeling.</p>" },
+          { type: "text", html: "<p>That night, I sent both. She wrote back: ‘I see it.’ And somehow, the river felt closer to the Netherlands.</p>" }
+        ]
+      },
+      {
+        id: "teacher-song",
+        title: "The Teacher’s Song",
+        author: "Sir Sagoe",
+        about: "A class learns to hear the music inside their own work.",
+        tags: ["school", "gratitude"],
+        sections: [
+          { type: "text", html: "<p>We thought mistakes were noise. Sir Sagoe said, ‘They are rehearsals. Keep listening.’</p>" },
+          { type: "text", html: "<p>Every exercise had a beat. Equations clicked like shells; essays lifted like choruses.</p>" },
+          { type: "text", html: "<p>On Friday, he asked us to share one line we were proud of. The room hummed. By the bell, we’d become a band.</p>" }
+        ]
+      },
+      {
+        id: "market-stars",
+        title: "Market of Stars",
+        author: "Akua Aboagyewaa",
+        about: "A night market teaches the price of wonder.",
+        tags: ["adventure", "family"],
+        sections: [
+          { type: "text", html: "<p>Lanterns floated above the stalls like curious moons. Auntie Ama said, ‘Choose one wish. Pay with kindness.’</p>" },
+          { type: "text", html: "<p>I bought a small star, not for me, but for the boy who counted change twice. He smiled like dawn.</p>" },
+          { type: "text", html: "<p>We left with less money, more light. That’s how markets work when you trade in wonder.</p>" }
+        ]
+      }
+    ];
+
+    // ---------- App logic ----------
+    (function () {
+      const $ = (sel) => document.querySelector(sel);
+      const libraryEl = $("#library");
+      const readerEl = $("#reader");
+      const articleEl = $("#storyArticle");
+      const progressEl = $("#readProgress");
+      const tagFilterEl = $("#tagFilter");
+      const searchInputEl = $("#searchInput");
+
+      const bookmarkKey = "aboagyewaa.bookmarks";
+      const settingsKey = "aboagyewaa.settings";
+
+      const state = {
+        stories: STORIES,
+        filterTag: "",
+        searchQuery: "",
+        fontScale: 1.0,
+        bookmarks: loadJSON(bookmarkKey, {}),
+        settings: loadJSON(settingsKey, { theme: "light" }),
+        current: null
+      };
+
+      applyTheme(state.settings.theme);
+
+      // Generate icons + manifest dynamically (single-file)
+      setupIconsAndManifest();
+
+      // Register SW from a Blob (single-file offline cache)
+      if ("serviceWorker" in navigator) {
+        const swCode = `
+          const CACHE = "aboagyewaa-stories-single-v1";
+          const ASSETS = ["./"]; // cache the root document
+          self.addEventListener("install", (e) => {
+            e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+          });
+          self.addEventListener("activate", (e) => {
+            e.waitUntil(caches.keys().then(keys =>
+              Promise.all(keys.map(k => (k !== CACHE ? caches.delete(k) : null)))
+            ));
+          });
+          self.addEventListener("fetch", (e) => {
+            e.respondWith(
+              caches.match(e.request).then(res => res || fetch(e.request).catch(() => caches.match("./")))
+            );
+          });
+        `;
+        const blob = new Blob([swCode], { type: "text/javascript" });
+        const url = URL.createObjectURL(blob);
+        navigator.serviceWorker.register(url).catch(() => {});
+      }
+
+      // Populate tags
+      const allTags = Array.from(new Set(state.stories.flatMap(s => s.tags)));
+      for (const t of allTags) {
+        const opt = document.createElement("option");
+        opt.value = t; opt.textContent = t;
+        tagFilterEl.appendChild(opt);
+      }
+
+      // Events
+      $("#themeToggle").addEventListener("click", () => {
+        state.settings.theme = (state.settings.theme === "light") ? "dark" : "light";
+        saveJSON(settingsKey, state.settings);
+        applyTheme(state.settings.theme);
+      });
+
+      $("#shareApp").addEventListener("click", async () => {
+        const data = { title: "Aboagyewaa Stories", text: "Read beautiful, sensible stories.", url: location.href };
+        try {
+          if (navigator.share) await navigator.share(data);
+          else alert("Share this link:\n" + location.href);
+        } catch {}
+      });
+
+      $("#clearFilters").addEventListener("click", () => {
+        state.filterTag = ""; state.searchQuery = "";
+        tagFilterEl.value = ""; searchInputEl.value = "";
+        renderLibrary();
+      });
+
+      tagFilterEl.addEventListener("change", () => {
+        state.filterTag = tagFilterEl.value;
+        renderLibrary();
+      });
+
+      searchInputEl.addEventListener("input", () => {
+        state.searchQuery = searchInputEl.value.trim().toLowerCase();
+        renderLibrary();
+      });
+
+      $("#backToLibrary").addEventListener("click", () => {
+        readerEl.classList.add("hidden");
+        $("#library").classList.remove("hidden");
+        state.current = null;
+      });
+
+      $("#bookmarkBtn").addEventListener("click", () => {
+        if (!state.current) return;
+        state.bookmarks[state.current.id] = {
+          id: state.current.id,
+          title: state.current.title,
+          author: state.current.author,
+          progress: progressEl.value
+        };
+        saveJSON(bookmarkKey, state.bookmarks);
+        alert("Saved progress for “" + state.current.title + "”.");
+        renderLibrary();
+      });
+
+      $("#fontPlus").addEventListener("click", () => {
+        state.fontScale = Math.min(1.5, state.fontScale + 0.05);
+        applyFontScale();
+      });
+      $("#fontMinus").addEventListener("click", () => {
+        state.fontScale = Math.max(0.8, state.fontScale - 0.05);
+        applyFontScale();
+      });
+
+      // Scroll progress
+      readerEl.addEventListener("scroll", () => updateProgress());
+
+      // Initial render
+      renderLibrary();
+
+      // ------- Functions -------
+      function renderLibrary() {
+        const filtered = state.stories.filter((s) => {
+          const matchTag = !state.filterTag || s.tags.includes(state.filterTag);
+          const q = state.searchQuery;
+          const matchSearch =
+            !q ||
+            s.title.toLowerCase().includes(q) ||
+            s.author.toLowerCase().includes(q) ||
+            s.tags.join(" ").toLowerCase().includes(q) ||
+            (s.about || "").toLowerCase().includes(q);
+          return matchTag && matchSearch;
+        });
+
+        libraryEl.innerHTML = "";
+        if (filtered.length === 0) {
+          libraryEl.innerHTML = `<div class="card"><p>No stories found. Try clearing filters.</p></div>`;
+          return;
+        }
+
+        for (const s of filtered) {
+          const card = document.createElement("div");
+          card.className = "card";
+          const bookmarked = state.bookmarks[s.id];
+          card.innerHTML = `
+            <h3>${s.title}</h3>
+            <div class="meta">By ${s.author}${bookmarked ? ` • 🔖 Saved` : ""}</div>
+            <p>${s.about || ""}</p>
+            <div class="tags">${s.tags.map(t => `<span class="tag">${t}</span>`).join("")}</div>
+            <div class="actions">
+              <button class="btn read-btn">Read</button>
+              <button class="btn" data-id="${s.id}">Details</button>
+            </div>
+          `;
+          card.querySelector(".read-btn").addEventListener("click", () => openStory(s.id));
+          card.querySelector("[data-id]").addEventListener("click", () => showDetails(s));
+          libraryEl.appendChild(card);
+        }
+        $("#library").classList.remove("hidden");
+        readerEl.classList.add("hidden");
+      }
+
+      function openStory(id) {
+        const story = state.stories.find(s => s.id === id);
+        if (!story) return;
+        state.current = story;
+        articleEl.innerHTML = `
+          <h2>${story.title}</h2>
+          <div class="byline">By ${story.author}</div>
+          ${story.sections.map(sec => renderSection(sec)).join("")}
+        `;
+        applyFontScale();
+        $("#library").classList.add("hidden");
+        readerEl.classList.remove("hidden");
+        readerEl.scrollTop = 0;
+        updateProgress();
+      }
+
+      function renderSection(sec) {
+        if (sec.type === "text") return `<div class="section">${sec.html}</div>`;
+        return `<div class="section"><p>Unsupported section type.</p></div>`;
+      }
+
+      function updateProgress() {
+        const totalScrollable = articleEl.scrollHeight - readerEl.clientHeight;
+        const scrollTop = readerEl.scrollTop;
+        const pct = totalScrollable > 0 ? Math.min(100, Math.round((scrollTop / totalScrollable) * 100)) : 0;
+        progressEl.value = pct;
+      }
+
+      function applyFontScale() {
+        articleEl.style.transformOrigin = "top left";
+        articleEl.style.transform = `scale(${state.fontScale})`;
+      }
+
+      function showDetails(s) {
+        const msg = `${s.title}\nBy ${s.author}\nTags: ${s.tags.join(", ")}\n\n${s.about || ""}`;
+        alert(msg);
+      }
+
+      function loadJSON(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch { return fallback; }
+      }
+      function saveJSON(key, value) {
+        try { localStorage.setItem(key, JSON.stringify(value)); } catch {}
+      }
+
+      // Create PNG icons and manifest blobs, attach to DOM
+      function setupIconsAndManifest() {
+        const icon192 = makeIconPNG(192, "#5a57ff", "#ffffff", "📚");
+        const icon512 = makeIconPNG(512, "#5a57ff", "#ffffff", "📚");
+
+        // Set favicon
+        document.getElementById("faviconLink").href = icon192;
+
+        // Build manifest JSON dynamically so it points to blob URLs
+        const manifest = {
+          name: "Aboagyewaa Stories",
+          short_name: "Stories",
+          start_url: ".",
+          display: "standalone",
+          background_color: getComputedStyle(document.documentElement).getPropertyValue("--bg").trim() || "#0f1121",
+          theme_color: "#5a57ff",
+          icons: [
+            { src: icon192, sizes: "192x192", type: "image/png" },
+            { src: icon512, sizes: "512x512", type: "image/png" }
+          ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+        const manifestUrl = URL.createObjectURL(manifestBlob);
+        document.getElementById("manifestLink").href = manifestUrl;
+      }
+
+      function makeIconPNG(size, bg, fg, emoji) {
+        const canvas = document.createElement("canvas");
+        canvas.width = size; canvas.height = size;
+        const ctx = canvas.getContext("2d");
+        // Background
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, size, size);
+        // Rounded corner overlay for style
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        roundRect(ctx, size*0.06, size*0.06, size*0.88, size*0.88, size*0.18, true);
+        // Emoji/text
+        ctx.font = `${Math.floor(size*0.5)}px "Segoe UI Emoji","Apple Color Emoji","Noto Color Emoji",system-ui`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = fg;
+        ctx.fillText(emoji, size/2, size/2);
+        return canvas.toDataURL("image/png");
+      }
+      function roundRect(ctx, x, y, w, h, r, fill) {
+        ctx.beginPath();
+        ctx.moveTo(x+r, y);
+        ctx.arcTo(x+w, y, x+w, y+h, r);
+        ctx.arcTo(x+w, y+h, x, y+h, r);
+        ctx.arcTo(x, y+h, x, y, r);
+        ctx.arcTo(x, y, x+w, y, r);
+        ctx.closePath();
+        if (fill) ctx.fill();
+      }
+    })();
+  </script>
+</body>
+    </html>
